@@ -28,6 +28,7 @@ def create_table():
             category TEXT,
             location TEXT,
             documentation TEXT,
+            application_notes TEXT,
             quantity INTEGER,
             status TEXT,
             notes TEXT,
@@ -40,14 +41,14 @@ def create_table():
 
 
 # Functions
-def add_item(name, category, location, documentation, quantity, status, notes, image_path, video_path):
+def add_item(name, category, location, documentation, application_notes, quantity, status, notes, image_path, video_path):
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute("""
         INSERT INTO items 
-        (name, category, location, documentation, quantity, status, notes, image_path, video_path)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (name, category, location, documentation, quantity, status, notes, image_path, video_path))
+        (name, category, location, documentation, application_notes, quantity, status, notes, image_path, video_path)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (name, category, location, documentation, application_notes, quantity, status, notes, image_path, video_path))
     conn.commit()
     conn.close()
 
@@ -63,14 +64,14 @@ def get_item_by_id(item_id):
     conn.close()
     return df.iloc[0] if not df.empty else None
 
-def update_item(item_id, name, category, location, documentation, quantity, status, notes, image_path, video_path):
+def update_item(item_id, name, category, location, documentation, application_notes, quantity, status, notes, image_path, video_path):
     conn = connect_db()
     cursor = conn.cursor()
     cursor.execute("""
         UPDATE items
-        SET name = ?, category = ?, location = ?, documentation = ?, quantity = ?, status = ?, notes = ?, image_path = ?, video_path = ?
+        SET name = ?, category = ?, location = ?, documentation = ?, application_notes = ?, quantity = ?, status = ?, notes = ?, image_path = ?, video_path = ?
         WHERE id = ?
-    """, (name, category, location, documentation, quantity, status, notes, image_path, video_path, item_id))
+    """, (name, category, location, documentation, application_notes, quantity, status, notes, image_path, video_path, item_id))
     conn.commit()
     conn.close()
 
@@ -152,6 +153,18 @@ if page == "Inventory":
             else:
                 st.write("Documentation: None provided")
 
+            if row["application_notes"] and os.path.exists(row["application_notes"]):
+                with open(row["application_notes"], "rb") as notes_file:
+                    st.download_button(
+                        label="Open / Download Lab Application Notes",
+                        data=notes_file,
+                        file_name=os.path.basename(row["application_notes"]),
+                        mime="application/pdf",
+                        key=f"app_notes_{row['id']}"
+                    )
+            else:
+                st.write("Lab application notes: None provided")
+
             if row["video_path"] and os.path.exists(row["video_path"]):
                 with open(row["video_path"], "rb") as video_file:
                     st.download_button(
@@ -175,6 +188,7 @@ elif page == "Add Item":
         category = st.text_input("Category")
         location = st.text_input("Location") 
         documentation_file = st.file_uploader("Upload documentation (PDF)", type=["pdf"])
+        application_notes_file = st.file_uploader("Upload lab application notes (PDF)", type=["pdf"])
         quantity = st.number_input("Quantity", min_value=0, step=1)
         status = st.selectbox("Status", ["Available", "In use", "Broken", "Missing"])
         notes = st.text_area("Notes")
@@ -189,12 +203,18 @@ elif page == "Add Item":
                 image_path = ""
                 documentation_path = ""
                 video_path = ""
+                application_notes_path = ""
 
                 # Showing documentation, image, video
                 if documentation_file is not None:
                     documentation_path = os.path.join(DOCUMENT_FOLDER, documentation_file.name)
                     with open(documentation_path, "wb") as f:
                         f.write(documentation_file.getbuffer())
+
+                if application_notes_file is not None:
+                    application_notes_path = os.path.join(DOCUMENT_FOLDER, application_notes_file.name)
+                    with open(application_notes_path, "wb") as f:
+                        f.write(application_notes_file.getbuffer())
 
                 if image is not None:
                     image_path = os.path.join(IMAGE_FOLDER, image.name)
@@ -206,7 +226,7 @@ elif page == "Add Item":
                     with open(video_path, "wb") as f:
                         f.write(video.getbuffer())
 
-                add_item(name, category, location, documentation_path, quantity, status, notes, image_path, video_path)
+                add_item(name, category, location, documentation_path, application_notes_path, quantity, status, notes, image_path, video_path)
                 st.success("Item added successfully.")
 
     if st.button("Back to Inventory"):
@@ -250,6 +270,18 @@ elif page == "Edit Item":
                         key=f"current_doc_{selected_id}"
                     )
 
+            current_application_notes_path = item["application_notes"] if pd.notna(item["application_notes"]) else ""
+
+            if current_application_notes_path and os.path.exists(current_application_notes_path):
+                with open(current_application_notes_path, "rb") as app_file:
+                    st.download_button(
+                        label="Current Lab Application Notes",
+                        data=app_file,
+                        file_name=os.path.basename(current_application_notes_path),
+                        mime="application/pdf",
+                        key=f"current_app_notes_{selected_id}"
+                    )
+
             current_video_path = item["video_path"] if pd.notna(item["video_path"]) else ""
 
             if current_video_path and os.path.exists(current_video_path):
@@ -275,6 +307,7 @@ elif page == "Edit Item":
                 )
 
                 new_documentation_file = st.file_uploader("Upload documentation (PDF)", type=["pdf"])
+                new_application_file = st.file_uploader("Upload lab application (PDF)", type=["pdf"])
 
                 notes = st.text_area("Notes", value=item["notes"] or "")
                 new_image = st.file_uploader("Upload new image", type=["jpg", "jpeg", "png"])
@@ -282,7 +315,7 @@ elif page == "Edit Item":
 
                 submitted = st.form_submit_button("Update Item")
 
-                # name required, should there be other required fields too ?  location ?
+                # Name is required field, should there be other required fields too ?  location ?
                 if submitted:
                     if not name:
                         st.error("Item name is required.")
@@ -300,6 +333,13 @@ elif page == "Edit Item":
                             documentation_path = os.path.join(DOCUMENT_FOLDER, new_documentation_file.name)
                             with open(documentation_path, "wb") as f:
                                 f.write(new_documentation_file.getbuffer())
+
+                        application_notes_path = current_application_notes_path
+
+                        if new_application_file is not None:
+                            application_notes_path = os.path.join(DOCUMENT_FOLDER, new_application_file.name)
+                            with open(application_notes_path, "wb") as f:
+                                f.write(new_application_file.getbuffer())
                         
                         video_path = current_video_path
 
@@ -314,6 +354,7 @@ elif page == "Edit Item":
                             category,
                             location,
                             documentation_path,
+                            application_notes_path,
                             quantity,
                             status,
                             notes,

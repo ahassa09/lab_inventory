@@ -66,6 +66,18 @@ else:
             else:
                 st.write("Documentation: None provided")
 
+            if row["application_notes"] and os.path.exists(row["application_notes"]):
+                with open(row["application_notes"], "rb") as notes_file:
+                    st.download_button(
+                        label="Open / Download Lab Application Notes",
+                        data=notes_file,
+                        file_name=os.path.basename(row["application_notes"]),
+                        mime="application/pdf",
+                        key=f"app_notes_{row['id']}"
+                    )
+            else:
+                st.write("Lab application notes: None provided")
+
             if row["video_path"] and os.path.exists(row["video_path"]):
                 with open(row["video_path"], "rb") as video_file:
                     st.download_button(

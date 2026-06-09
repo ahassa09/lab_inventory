@@ -11,12 +11,26 @@ Next, you  must install the requirements. You can do so by running
 
 `pip install -r requirements.txt`
 
+### Windows Launch Instructions
+
+To launch the **admin program** which allows the user to enter, edit, and delete items from the database, run
+
+`Lab_Inventory_Admin.bat`
+
+To launch the **viewer program** which allows the user to search and view items in the database, run
+
+`Lab_Inventory_Viewer.bat`
+
+The application will automatically open in your browser.
+
+### Mac Launch Instructions
+
 To launch the **admin program** which allows the user to enter, edit, and delete items from the database, run
 
 `./Lab_Inventory_Admin.command`
 
-The application will automatically open in your browser.
-
 To launch the **viewer program** which allows the user to search and view items in the database, run
 
 `./Lab_Inventory_Viewer.command`
+
+The application will automatically open in your browser.
