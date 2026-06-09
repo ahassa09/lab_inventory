@@ -1,5 +1,3 @@
 @echo off
-
-cd /d "C:\lab_inventory"
-
-streamlit run inventory_admin.py
+python -m streamlit run inventory_admin.py
+pause

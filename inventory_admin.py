@@ -126,7 +126,8 @@ if page == "Inventory":
             col1, col2 = st.columns([1, 3])
 
             with col1:
-                if row["image_path"] and os.path.exists(row["image_path"]):
+                img = row["image_path"]
+                if isinstance(img, str) and img.strip() and os.path.exists(img):
                     st.image(row["image_path"], width=150)
                 else:
                     st.write("No image")
@@ -141,7 +142,8 @@ if page == "Inventory":
                 st.write(f"Notes: {row['notes']}")
 
             # Buttons to download documentation and video if they have been provided 
-            if row["documentation"] and os.path.exists(row["documentation"]):
+            doc = row["documentation"]
+            if isinstance(doc, str) and doc.strip() and os.path.exists(doc):
                 with open(row["documentation"], "rb") as pdf_file:
                     st.download_button(
                         label="Open / Download Documentation (PDF)",
@@ -153,7 +155,9 @@ if page == "Inventory":
             else:
                 st.write("Documentation: None provided")
 
-            if row["application_notes"] and os.path.exists(row["application_notes"]):
+            app_notes = row["application_notes"]
+
+            if isinstance(app_notes, str) and app_notes.strip() and os.path.exists(app_notes):
                 with open(row["application_notes"], "rb") as notes_file:
                     st.download_button(
                         label="Open / Download Lab Application Notes",
@@ -165,7 +169,9 @@ if page == "Inventory":
             else:
                 st.write("Lab application notes: None provided")
 
-            if row["video_path"] and os.path.exists(row["video_path"]):
+            vid = row["video_path"]
+
+            if isinstance(vid, str) and vid.strip() and os.path.exists(vid):
                 with open(row["video_path"], "rb") as video_file:
                     st.download_button(
                         label="Download Video",
